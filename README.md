@@ -46,6 +46,27 @@ See full ER diagram: [`.kiro/steering/er.mermaid`](.kiro/steering/er.mermaid)
 
 ## 🚀 Getting Started
 
+### Project Status
+
+#### Phase 1 ✅ **COMPLETED** - Project Setup & Infrastructure
+- [x] Next.js 15 initialized with App Router, TypeScript, Tailwind CSS v4
+- [x] All dependencies installed (next-auth, supabase, drizzle-orm, AI SDK, shadcn/ui)
+- [x] Testing infrastructure setup (Vitest + Testing Library)
+- [x] Quality gates configured (Husky pre-commit & pre-push hooks)
+- [x] Environment configuration files created
+- [x] Drizzle ORM configured for database migrations
+- [x] Project structure established
+
+#### Phase 2-9 (In Progress)
+- [ ] NextAuth + OAuth configuration
+- [ ] Database schema implementation
+- [ ] Guest session management
+- [ ] Knowledge base & RAG pipeline
+- [ ] AI chat with streaming
+- [ ] Admin dashboard with Realtime
+- [ ] UI polish + dark mode
+- [ ] Testing & deployment
+
 ### Prerequisites
 - Node.js 20+
 - Supabase account (with pgvector enabled)
@@ -77,6 +98,68 @@ npm run dev
 
 ## 📁 Project Structure
 ```
+realtime-interact/
+├── .husky/                   # Git hooks (pre-commit, pre-push)
+├── .kiro/
+│   ├── plans/                # Implementation plan (9 phases)
+│   ├── skills/               # AI-DLC workflow skills
+│   └── steering/             # Architecture & database documentation
+├── knowledge/                # Knowledge base for RAG
+│   └── knowledge.md          # Main knowledge content
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── layout.tsx        # Root layout
+│   │   ├── page.tsx          # Landing page
+│   │   ├── (auth)/           # Auth pages (login/register)
+│   │   ├── chat/             # Chat interface
+│   │   ├── admin/            # Admin dashboard
+│   │   └── api/              # API routes
+│   ├── components/           # React components
+│   │   └── ui/               # shadcn/ui components
+│   ├── db/                   # Drizzle ORM schema
+│   ├── lib/                  # Utilities (auth, supabase, RAG)
+│   └── test/                 # Test setup & utilities
+├── .env.local                # Local environment variables
+├── .env.example              # Environment template
+├── drizzle.config.ts         # Drizzle ORM config
+├── vitest.config.ts          # Vitest config
+└── package.json              # Dependencies & scripts
+```
+
+## 🧪 Quality Gates
+
+This project implements strict quality gates via git hooks:
+
+**Pre-commit** (runs on every commit):
+1. TypeScript type check
+2. ESLint
+3. Unit tests
+
+**Pre-push** (runs before pushing):
+1. Full test suite with coverage
+2. Production build check
+
+Configure in `.husky/pre-commit` and `.husky/pre-push`.
+
+## 📝 Available Scripts
+
+```bash
+# Development
+npm run dev           # Start dev server
+npm run build         # Production build
+npm run start         # Start production server
+
+# Testing
+npm run test          # Run tests in watch mode
+npm run test:run      # Run tests once
+npm run test:coverage # Run with coverage report
+
+# Code Quality
+npm run lint          # Run ESLint
+```
+
+## 📁 Project Structure (Old)
+```
 app/
 ├── page.tsx              → Landing page (avatar hero)
 ├── (auth)/login/         → Login page
@@ -85,10 +168,3 @@ app/
 └── api/                  → Backend routes (chat, knowledge, auth)
 ```
 
-## 📝 License
-
-MIT
-
----
-
-**Built by Thanawat (Tor)** — AI Engineer | [Portfolio](https://thanawat-hub.github.io)
