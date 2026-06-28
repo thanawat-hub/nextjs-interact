@@ -1,0 +1,152 @@
+erDiagram
+    users {
+        uuid id PK "NextAuth managed - core user id"
+        string name "display name"
+        string email UK "login identifier + account linking key"
+        timestamp email_verified_at "OAuth verified timestamp"
+        string image "profile pic URL from OAuth provider"
+        timestamp created_at "retention analysis"
+    }
+
+    accounts {
+        uuid id PK "SYSTEM TABLE (NextAuth)"
+        uuid user_id FK "users.id (ON DELETE CASCADE)"
+        string type "oauth | credentials"
+        string provider "google | github | etc"
+        string provider_account_id "provider unique user ID"
+        text refresh_token "OAuth refresh token"
+        text access_token "OAuth access token"
+        int expires_at "token expiration timestamp"
+        string token_type "token type (e.g. bearer)"
+        string scope "granted OAuth permissions"
+        text id_token "OIDC token"
+        string session_state "provider session state"
+    }
+
+    sessions {
+        uuid id PK "SYSTEM TABLE (NextAuth)"
+        string session_token UK "NextAuth database session token"
+        uuid user_id FK "users.id (ON DELETE CASCADE)"
+        timestamp expires "session expiration time"
+    }
+
+    verification_tokens {
+        string identifier "SYSTEM TABLE (NextAuth)"
+        string token UK "verification token"
+        timestamp expires "token expiration"
+    }
+
+    guest_sessions {
+        uuid id PK "CUSTOM TABLE"
+        string session_id UK "cookie-based UUID -> guest identifier"
+        string ip_address "geo analytics, bot detection (ML)"
+        string user_agent "device info -> segmentation (ML)"
+        string referrer "traffic source -> attribution, conversion prediction (ML)"
+        int questions_used "counter 0-2 -> rate limit enforcement"
+        int max_questions "default 2, configurable by admin"
+        uuid converted_to_user_id FK "users.id (NULL until signup) -> conversion metric"
+        timestamp converted_at "time-to-convert analysis (ML)"
+        jsonb metadata "extra: utm_source, landing_page -> funnel optimization (ML)"
+        timestamp created_at "cohort analysis"
+        timestamp expires_at "session TTL (24h) -> re-visit detection"
+    }
+
+    user_profiles {
+        uuid id PK "CUSTOM TABLE"
+        uuid user_id FK "users.id (auto-created by Trigger)"
+        enum role "admin | member (no guest here!)"
+        string display_name "UI display -> personalization"
+        string avatar_url "Supabase Storage -> static or AI generated avatar base image"
+        text avatar_style_prompt "Prompt used to generate this avatar (ML: style transfer)"
+        text bio "self-description"
+        int total_questions_asked "engagement scoring, churn prediction (ML)"
+        timestamp last_active_at "retention metric, churn feature (ML)"
+    }
+
+    usage_logs {
+        uuid id PK "CUSTOM TABLE"
+        uuid user_id FK "users.id (NULL for guest)"
+        string session_id FK "guest_sessions.session_id"
+        enum action "question | login | signup | feedback | image_gen | tts | video_gen"
+        inet ip_address "bot detection (ML)"
+        int tokens_consumed "anomaly detection (ML)"
+        decimal cost_usd "budget alerts, ROI calculation"
+        jsonb metadata "model used, latency, API costs breakdown"
+        timestamp created_at "time-series forecasting (ML)"
+    }
+
+    conversations {
+        uuid id PK "CUSTOM TABLE"
+        uuid user_id FK "users.id (NULL if guest)"
+        string session_id FK "guest_sessions.session_id (for guest linking)"
+        string title "auto-generated from first msg"
+        enum status "active | archived -> lifecycle management"
+        jsonb metadata "context: source page, referrer -> attribution (ML)"
+        timestamp created_at "traffic forecasting (ML)"
+    }
+
+    messages {
+        uuid id PK "CUSTOM TABLE"
+        uuid conversation_id FK "conversations.id"
+        enum role "user | assistant | system"
+        enum message_type "text | image_generation | video_avatar"
+        text content "chat text or prompt used for generation"
+        text media_url "URL of generated image or lip-sync mp4 video"
+        text audio_url "URL of generated TTS audio file"
+        string generation_model "model: gpt-4o-mini | dall-e-3 | elevenlabs | hedra"
+        int audio_duration_ms "TTS audio length -> lip-sync sync + billing"
+        int tokens_used "cost tracking, budget optimization"
+        jsonb knowledge_chunks_used "chunk IDs -> RAG tracing, reranker training (ML)"
+        int response_time_ms "performance monitoring, SLA alerts"
+        int feedback_score "1-5 -> reward model, RLHF fine-tuning (ML)"
+        boolean is_flagged "True = Toxic/Prompt Injection detected -> train safety classifier (ML)"
+        boolean is_out_of_scope "True = No knowledge found -> active learning (ML)"
+        timestamp created_at "peak hour detection (ML)"
+    }
+
+    knowledge_documents {
+        uuid id PK "CUSTOM TABLE"
+        string title "document label"
+        string source_file "original filename"
+        enum category "personal | education | work_experience | skills | projects | general"
+        int version "track updates -> embedding drift detection (ML)"
+        boolean is_active "soft delete, A/B test old vs new"
+        uuid uploaded_by FK "users.id (admin only)"
+        timestamp created_at "knowledge freshness scoring"
+    }
+
+    knowledge_chunks {
+        uuid id PK "CUSTOM TABLE"
+        uuid document_id FK "knowledge_documents.id"
+        text content "actual text chunk -> RAG context window"
+        vector embedding "1536 dim -> cosine similarity search, fine-tune embeddings (ML)"
+        int chunk_index "ordering within document"
+        jsonb metadata "heading, tags -> faceted search, topic classification (ML)"
+        int tokens "chunk size -> optimize chunking strategy"
+        int hit_count "popular knowledge discovery, content recommendation (ML)"
+        timestamp created_at "drift detection (ML)"
+    }
+
+    %% ==========================================
+    %% Relationships
+    %% ==========================================
+
+    %% NextAuth System Relations
+    users ||--o{ accounts : "links multiple OAuth providers (Account Linking)"
+    users ||--o{ sessions : "manages active auth sessions"
+
+    %% User Profile & Activity
+    users ||--|| user_profiles : "has profile (auto-created by Trigger)"
+    users ||--o{ usage_logs : "generates activity logs"
+    users ||--o{ conversations : "creates chat sessions"
+    users ||--o{ knowledge_documents : "uploads (admin only)"
+
+    %% Guest Flow
+    guest_sessions |o--o| users : "converts to user (on signup)"
+    guest_sessions ||--o{ conversations : "creates (before signup)"
+    guest_sessions ||--o{ usage_logs : "tracks via session_id"
+
+    %% Chat & Knowledge
+    conversations ||--o{ messages : "contains messages"
+    knowledge_documents ||--o{ knowledge_chunks : "split into chunks"
+    messages }o--o{ knowledge_chunks : "retrieves via JSONB (logical M:M)"
