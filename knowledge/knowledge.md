@@ -11,10 +11,10 @@
 ## Personal Info
 
 - **ชื่อ:** Thanawat Boonyasitpichai (ธนวัฒน์ บุญสิทธิ์พิชัย)
-- **ชื่อเล่น:** Tor (ต้อ)
+- **ชื่อเล่น:** Tor (ต่อ)
 - **ตำแหน่ง:** AI Engineer
 - **ที่อยู่:** กรุงเทพฯ, ประเทศไทย
-- **ภาษา:** ไทย (native), English (professional working)
+- **ภาษา:** ไทย (native), English (working)
 - **Portfolio:** https://thanawat-hub.github.io
 - **GitHub:** https://github.com/thanawat-hub
 - **ความสนใจ:** AI/LLM, RAG Systems, Full-stack Development, Automation

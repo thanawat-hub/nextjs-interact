@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔒 Running full test suite before push..."
+
+# Full regression test (if any tests exist)
+if [ -d "src/__tests__" ] || find src -name "*.test.ts*" -o -name "*.spec.ts*" | grep -q .; then
+  npx vitest run --coverage || { echo "❌ Tests failed. Fix before push."; exit 1; }
+else
+  echo "→ No tests found, skipping test execution"
+fi
+
+# Build check (catches runtime errors)
+echo "→ Building project..."
+npx next build || { echo "❌ Build failed. Fix before push."; exit 1; }
+
+echo "✅ All checks passed. Pushing..."

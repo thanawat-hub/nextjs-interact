@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🧪 Running quality gates before commit..."
+
+# 1. Type check
+echo "→ TypeScript check..."
+npx tsc --noEmit || { echo "❌ TypeScript errors found. Fix before commit."; exit 1; }
+
+# 2. Lint
+echo "→ Lint check..."
+npx next lint || { echo "❌ Lint errors found. Fix before commit."; exit 1; }
+
+# 3. Unit tests (if any tests exist)
+if [ -d "src/__tests__" ] || find src -name "*.test.ts*" -o -name "*.spec.ts*" | grep -q .; then
+  echo "→ Running unit tests..."
+  npx vitest run || { echo "❌ Tests failed. Fix before commit."; exit 1; }
+else
+  echo "→ No tests found, skipping test execution"
+fi
+
+echo "✅ All checks passed. Committing..."
