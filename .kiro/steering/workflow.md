@@ -93,12 +93,86 @@
 | RBAC | Middleware blocks non-admin, API rejects unauthorized |
 
 ## Naming Conventions for Commits
+
+### Format
 ```
-feat(auth): add Google OAuth with account linking
-fix(chat): prevent LLM call when is_flagged=true
-test(guest): add quota enforcement unit tests
-refactor(rag): optimize chunk retrieval query
-docs(steering): update database.md with new fields
+<type>(<scope>): <short description>
+
+[optional body — what & why, not how]
+
+[optional footer — BREAKING CHANGE, closes #issue]
+```
+
+### Types (Conventional Commits)
+| Type | ใช้เมื่อ | ตัวอย่าง |
+|------|---------|---------|
+| `feat` | เพิ่ม feature ใหม่ที่ user เห็น | `feat(chat): add streaming AI response with Vercel AI SDK` |
+| `fix` | แก้ bug | `fix(guest): reset quota counter on session expiry` |
+| `refactor` | ปรับโค้ดโดยไม่เปลี่ยน behavior | `refactor(rag): switch from raw SQL to match_knowledge_chunks RPC` |
+| `test` | เพิ่ม/แก้ test | `test(rbac): add middleware role-check unit tests` |
+| `docs` | เปลี่ยนเฉพาะ documentation | `docs(steering): update database.md with media fields` |
+| `style` | formatting, semicolons, whitespace (ไม่กระทบ logic) | `style(ui): fix tailwind class ordering` |
+| `perf` | ปรับปรุง performance | `perf(rag): add ivfflat index for embedding search` |
+| `build` | เปลี่ยน build system, dependencies | `build(deps): upgrade next.js to 15.x` |
+| `ci` | เปลี่ยน CI/CD config | `ci(vercel): add preview deployment for PRs` |
+| `chore` | อื่นๆ ที่ไม่กระทบ src/test | `chore: update .env.example with new keys` |
+| `revert` | revert commit ก่อนหน้า | `revert: feat(chat) — remove experimental video avatar` |
+
+### Scopes (เฉพาะ project นี้)
+| Scope | ครอบคลุมอะไร |
+|-------|-------------|
+| `auth` | NextAuth, OAuth, accounts table, sessions, login/logout |
+| `rbac` | Middleware, role checking, route protection, policies |
+| `guest` | guest_sessions, quota, rate limiting, guest→member merge |
+| `chat` | Chat API, streaming, message saving, conversation management |
+| `rag` | Knowledge ingestion, chunking, embedding, vector search, retrieval |
+| `safety` | Content moderation, is_flagged, is_out_of_scope, prompt injection prevention |
+| `media` | TTS (ElevenLabs), image gen (DALL-E), video avatar (Hedra/D-ID) |
+| `admin` | Admin dashboard, realtime subscriptions, knowledge management UI |
+| `db` | Migration, schema changes, triggers, RLS policies, indexes |
+| `ui` | Components, layouts, theme, dark mode, animations |
+| `api` | API routes not covered by other scopes |
+| `deps` | Package updates, new dependencies |
+| `deploy` | Vercel config, env vars, build settings |
+| `steering` | .kiro/steering files, plans, workflow docs |
+
+### Rules
+1. **Subject line ≤ 72 characters** — ถ้ายาวเกิน ให้ย่อ description, ใส่ detail ใน body
+2. **ใช้ imperative mood** — "add" ไม่ใช่ "added", "fix" ไม่ใช่ "fixed"
+3. **ภาษาอังกฤษ** — commit message เป็น English เท่านั้น (ไทยไว้ใน PR description)
+4. **1 commit = 1 logical change** — อย่ารวมหลาย features ใน commit เดียว
+5. **BREAKING CHANGE** — ถ้ามี breaking change ใส่ footer:
+   ```
+   feat(db)!: rename user_profiles.role enum values
+   
+   BREAKING CHANGE: role values changed from "user" to "member"
+   ```
+
+### ตัวอย่าง Commit Messages สำหรับ Project นี้
+```
+feat(auth): implement NextAuth with Google + GitHub OAuth
+feat(auth): add account linking (multiple providers per user)
+feat(db): create initial migration with 7 custom tables + triggers
+feat(guest): implement session-based quota tracking (max 2 questions)
+feat(chat): add AI streaming response with Vercel AI SDK
+feat(rag): implement knowledge ingestion pipeline (chunk + embed)
+feat(safety): add OpenAI moderation check before LLM call
+feat(admin): add realtime dashboard with Supabase subscriptions
+feat(media): integrate ElevenLabs TTS for voice responses
+feat(ui): add dark/light mode with next-themes
+
+fix(guest): prevent quota bypass via cookie manipulation
+fix(rbac): block /admin routes for non-admin in middleware
+fix(rag): handle empty embedding result gracefully
+
+test(auth): add OAuth flow + trigger unit tests
+test(guest): verify quota enforcement and merge logic
+test(chat): test safety pipeline (flagged + out_of_scope)
+
+refactor(rag): extract similarity search into Supabase RPC function
+perf(db): add partial index on messages.is_flagged
+docs(steering): add workflow.md with model assignment
+chore: add .env.example with all required variables
 ```
 
 ## When to Re-plan
