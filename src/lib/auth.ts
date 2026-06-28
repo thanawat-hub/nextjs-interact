@@ -14,11 +14,18 @@ const isAuthConfigured = Boolean(
   process.env.GITHUB_CLIENT_ID
 );
 
+if (!isAuthConfigured && process.env.NODE_ENV === 'development') {
+  console.warn('⚠️  Auth not fully configured. Set up Supabase and OAuth credentials in .env.local');
+}
+
 export const authOptions: any = {
-  adapter: isAuthConfigured ? SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }) : undefined,
+  // Only use adapter if Supabase is configured
+  ...(isAuthConfigured && {
+    adapter: SupabaseAdapter({
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    }),
+  }),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || 'not-configured',
@@ -32,11 +39,13 @@ export const authOptions: any = {
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   callbacks: {
     async session({ session, token }: any) {
-      if (session.user && token.sub) {
+      if (!session) return session;
+      
+      if (session.user && token?.sub) {
         session.user.id = token.sub;
         session.user.role = token.role || 'member';
       }
@@ -45,8 +54,10 @@ export const authOptions: any = {
     async jwt({ token, user, trigger }: any) {
       if (user) {
         token.sub = user.id;
+        token.role = 'member'; // Default role
       }
       
+      // Only fetch from database if Supabase is configured
       if ((trigger === 'signIn' || trigger === 'update') && isAuthConfigured) {
         try {
           const { supabaseAdmin } = await import('./supabase');
@@ -71,4 +82,8 @@ export const authOptions: any = {
     error: '/auth/error',
   },
   debug: process.env.NODE_ENV === 'development',
+  // Disable automatic API routes if auth not configured
+  ...(isAuthConfigured ? {} : {
+    secret: process.env.NEXTAUTH_SECRET || 'development-secret-key-change-in-production',
+  }),
 };
